@@ -1,6 +1,6 @@
 # SerialLink
 
-**SerialLink** makes Arduino-to-Arduino (or Arduino-to-ESP32) serial communication as easy as snapping two boards together.
+**SerialLink** makes Arduino-to-Arduino (or Arduino-to-ESP32) serial communication as easy as plugging in two wires.  
 
 Just connect:
 - **TX → RX**
@@ -20,21 +20,31 @@ and you're ready to send and receive named variables without manual `Serial.read
 ---
 
 ## Installation
-1. Download this repository as a ZIP
-2. In Arduino IDE: **Sketch → Include Library → Add .ZIP Library**
-3. Select the downloaded ZIP file
+1. Download this repository as a ZIP  
+2. In Arduino IDE: **Sketch → Include Library → Add .ZIP Library**  
+3. Select the downloaded ZIP file  
 
 ---
 
-## Combined Example
-
+## Example: Sender Board
 ```cpp
 #include <SerialLink.h>
 
-// Change this to MODE_SENDER or MODE_RECEIVER
-#define MODE_SENDER 1
-#define MODE_RECEIVER 2
-#define MODE MODE_SENDER  // <-- set here
+SerialLink link(Serial);
+
+void setup() {
+  link.begin(); // default baud rate 115200
+}
+
+void loop() {
+  link.send("temp", random(20, 30));  // send random temperature
+  link.send("led", "ON");             // send LED state
+  delay(1000);
+}
+```
+##Example: Reciever Board(Arduino or ESP32)
+  ```cpp
+#include <SerialLink.h>
 
 SerialLink link(Serial);
 
@@ -42,7 +52,6 @@ void setup() {
   Serial.begin(115200);
   link.begin();
 
-#if MODE == MODE_RECEIVER
   link.on("temp", [](String value) {
     Serial.print("Temperature: ");
     Serial.println(value);
@@ -52,15 +61,8 @@ void setup() {
     Serial.print("LED State: ");
     Serial.println(value);
   });
-#endif
 }
 
 void loop() {
-#if MODE == MODE_SENDER
-  link.send("temp", random(20, 30));  // send random temperature
-  link.send("led", "ON");
-  delay(1000);
-#elif MODE == MODE_RECEIVER
   link.listen(); // must be called to process incoming data
-#endif
 }
